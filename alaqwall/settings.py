@@ -16,7 +16,7 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.100.182').split(',')
 
 # ---------------------------------------------------------------------------
 # Apps
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.dtu',
     'apps.quotes',
+    'apps.predictor',
 ]
 
 MIDDLEWARE = [
@@ -130,7 +131,7 @@ SIMPLE_JWT = {
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = os.environ.get(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173'
+    'http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://192.168.100.182:3000'
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 
@@ -152,7 +153,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ──────────────────────────────────────────
+# YOLO Model Configuration
+# ──────────────────────────────────────────
+YOLO_MODEL_PATH = os.environ.get(
+    "YOLO_MODEL_PATH",
+    str(BASE_DIR / "ml_models" / "best.pt")
+)
 
+YOLO_CONFIDENCE = float(os.environ.get("YOLO_CONFIDENCE", "0.25"))
+
+# Max upload size: 10 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 
 

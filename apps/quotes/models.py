@@ -41,6 +41,10 @@ class Quote(models.Model):
 
     system_key = models.CharField(max_length=50, blank=True, default='')
 
+    selected_impression = models.CharField(max_length=50, blank=True, default='pva_primer')
+    selected_enduit = models.CharField(max_length=50, blank=True, default='jeton_prefix_putty')
+    selected_finition = models.CharField(max_length=50, blank=True, default='')
+
     labor_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     material_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)

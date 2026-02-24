@@ -2,7 +2,7 @@ from decimal import Decimal
 import math
 from rest_framework import serializers
 from .models import Quote, QuoteMaterial, QuoteSystemStep, Order, Invoice
-from apps.dtu.constants import SYSTEMS, MATERIAL_PRICES, VAT_RATE
+from apps.dtu.constants import SYSTEMS, MATERIAL_PRICES, PRODUCTS, VAT_RATE
 
 
 class QuoteMaterialSerializer(serializers.ModelSerializer):
@@ -48,6 +48,7 @@ class QuoteDetailSerializer(serializers.ModelSerializer):
             'finition_type', 'peinture_aspect', 'decorative_option',
             'exterieur_type', 'exterieur_finition', 'ancien_enduit',
             'system_key',
+            'selected_impression', 'selected_enduit', 'selected_finition',
             'labor_cost', 'material_cost', 'subtotal', 'tax', 'total',
             'client_name', 'client_address', 'client_phone', 'notes',
             'materials', 'system_steps', 'summary',
@@ -66,6 +67,7 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
             'plafond_type', 'placo_fini',
             'finition_type', 'peinture_aspect', 'decorative_option',
             'exterieur_type', 'exterieur_finition', 'ancien_enduit',
+            'selected_impression', 'selected_enduit', 'selected_finition',
             'client_name', 'client_address', 'client_phone', 'notes',
         ]
 
@@ -116,21 +118,21 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
         material_cost = Decimal('0')
         is_ext = quote.zone == 'exterieur'
 
-        imp_key = 'impression_ext' if is_ext else 'impression'
-        imp_price = MATERIAL_PRICES[imp_key]
-        impression_qty = math.ceil(surface / 10)
-        materials.append({
-            'material_id': imp_key,
-            'name': 'Impression façade' if is_ext else 'Impression universelle',
-            'unit': 'L',
-            'quantity': impression_qty,
-            'unit_price': imp_price,
-        })
-        material_cost += impression_qty * imp_price
-
         if is_ext:
-            ext_type = quote.exterieur_type
+            # ── Extérieur materials (unchanged — no product selection yet) ──
+            imp_key = 'impression_ext'
+            imp_price = MATERIAL_PRICES[imp_key]
+            impression_qty = math.ceil(surface / 10)
+            materials.append({
+                'material_id': imp_key,
+                'name': 'Impression façade',
+                'unit': 'L',
+                'quantity': impression_qty,
+                'unit_price': imp_price,
+            })
+            material_cost += impression_qty * imp_price
 
+            ext_type = quote.exterieur_type
             if ext_type in ('ancien_peinture', 'placo') and (
                 ext_type == 'placo' or quote.ancien_enduit == 'avec_enduit'
             ):
@@ -155,7 +157,7 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
                 })
                 material_cost += deco_qty * MATERIAL_PRICES['produit_decoratif_ext']
             elif ext_type == 'monocouche':
-                paint_qty = math.ceil((surface * 2) / 8)  
+                paint_qty = math.ceil((surface * 2) / 8)
                 materials.append({
                     'material_id': 'peinture_monocouche',
                     'name': 'Peinture monocouche façade',
@@ -174,19 +176,41 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
                     'unit_price': MATERIAL_PRICES['peinture_facade'],
                 })
                 material_cost += paint_qty * MATERIAL_PRICES['peinture_facade']
-        else:
-            if quote.element == 'plafond' and quote.plafond_type == 'placo' and not quote.placo_fini:
-                enduit_qty = math.ceil(surface * 1.5)
-                materials.append({
-                    'material_id': 'enduit',
-                    'name': 'Enduit de lissage',
-                    'unit': 'kg',
-                    'quantity': enduit_qty,
-                    'unit_price': MATERIAL_PRICES['enduit'],
-                })
-                material_cost += enduit_qty * MATERIAL_PRICES['enduit']
 
+        else:
+            # ── Intérieur materials — NOW USING PRODUCT CATALOG ──
+
+            # 1) Couche d'impression
+            imp_product = self._find_product('impression', quote.selected_impression)
+            if imp_product:
+                imp_qty = math.ceil(surface / imp_product['coverage'])
+                materials.append({
+                    'material_id': imp_product['id'],
+                    'name': imp_product['name'],
+                    'unit': imp_product['unit'],
+                    'quantity': imp_qty,
+                    'unit_price': imp_product['price'],
+                })
+                material_cost += imp_qty * imp_product['price']
+
+            # 2) Enduit (only when system has enduit steps)
+            has_enduit = any(s['id'] == 'enduit' for s in system_steps)
+            if has_enduit:
+                enduit_product = self._find_product('enduit', quote.selected_enduit)
+                if enduit_product:
+                    enduit_qty = math.ceil(surface * enduit_product['coverage'])
+                    materials.append({
+                        'material_id': enduit_product['id'],
+                        'name': enduit_product['name'],
+                        'unit': enduit_product['unit'],
+                        'quantity': enduit_qty,
+                        'unit_price': enduit_product['price'],
+                    })
+                    material_cost += enduit_qty * enduit_product['price']
+
+            # 3) Finition
             if quote.element == 'mur' and quote.finition_type == 'decorative':
+                # Decorative keeps old logic
                 if quote.decorative_option == 'produit_decoratif':
                     deco_qty = math.ceil(surface / 4)
                     materials.append({
@@ -197,7 +221,7 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
                         'unit_price': MATERIAL_PRICES['produit_decoratif'],
                     })
                     material_cost += deco_qty * MATERIAL_PRICES['produit_decoratif']
-                else:  
+                else:
                     pp_qty = math.ceil(surface * 1.1)
                     colle_qty = math.ceil(surface / 5)
                     materials.append({
@@ -217,19 +241,20 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
                     material_cost += pp_qty * MATERIAL_PRICES['papier_peint']
                     material_cost += colle_qty * MATERIAL_PRICES['colle']
             else:
+                # Simple finition — use product catalog
                 aspect = quote.peinture_aspect if quote.element == 'mur' else 'mat'
-                paint_key = f'peinture_{aspect}'
-                paint_price = MATERIAL_PRICES.get(paint_key, MATERIAL_PRICES['peinture_mat'])
-                paint_qty = math.ceil((surface * 2) / 10)  
-                paint_name = f"Peinture {aspect.capitalize()}"
-                materials.append({
-                    'material_id': paint_key,
-                    'name': paint_name,
-                    'unit': 'L',
-                    'quantity': paint_qty,
-                    'unit_price': paint_price,
-                })
-                material_cost += paint_qty * paint_price
+                fin_product = self._find_product('finition', quote.selected_finition, aspect=aspect)
+                if fin_product:
+                    coats = 2  # number of coats for finition
+                    paint_qty = math.ceil((surface * coats) / fin_product['coverage'])
+                    materials.append({
+                        'material_id': fin_product['id'],
+                        'name': fin_product['name'],
+                        'unit': fin_product['unit'],
+                        'quantity': paint_qty,
+                        'unit_price': fin_product['price'],
+                    })
+                    material_cost += paint_qty * fin_product['price']
 
         for mat in materials:
             QuoteMaterial.objects.create(quote=quote, **mat)
@@ -244,6 +269,30 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
         quote.tax = tax
         quote.total = total
         quote.save(update_fields=['labor_cost', 'material_cost', 'subtotal', 'tax', 'total'])
+   
+    def _find_product(self, category, product_id, aspect=None):
+        """Look up a product from the PRODUCTS catalog."""
+        if category == 'finition':
+            products = PRODUCTS['finition'].get(aspect, [])
+        else:
+            products = PRODUCTS.get(category, [])
+
+        for p in products:
+            if p['id'] == product_id:
+                return p
+
+        # Fallback: return the default product for this category
+        if category == 'finition':
+            products = PRODUCTS['finition'].get(aspect, [])
+        else:
+            products = PRODUCTS.get(category, [])
+
+        for p in products:
+            if p.get('default', False):
+                return p
+
+        # Last resort: return first product
+        return products[0] if products else None
 
 
 class QuoteStatusSerializer(serializers.Serializer):

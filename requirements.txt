@@ -4,3 +4,8 @@ djangorestframework-simplejwt>=5.3,<6.0
 django-cors-headers>=4.3,<5.0
 django-filter>=24.0,<25.0
 reportlab>=4.0
+
+
+# YOLO model
+ultralytics>=8.1.0
+

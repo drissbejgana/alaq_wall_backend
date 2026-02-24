@@ -234,3 +234,112 @@ DEFAULTS = {
     'labor_per_m2': Decimal('45'),
     'vat_rate': VAT_RATE,
 }
+
+
+# ─── PRODUCT CATALOG ───
+# Each product belongs to a material category.
+# Categories: impression, enduit, finition
+# Finition products are further grouped by aspect: mat, satine, brillant
+
+PRODUCTS = {
+    'impression': [
+        {
+            'id': 'pva_primer',
+            'name': 'PVA Primer',
+            'unit': 'L',
+            'coverage': 10,       # m² per liter
+            'price': Decimal('12'),
+        },
+    ],
+
+    'enduit': [
+        {
+            'id': 'jeton_prefix_putty',
+            'name': 'Jotun Prefix Putty',
+            'unit': 'kg',
+            'coverage': 1.5,      # kg per m²
+            'price': Decimal('8'),
+            'default': True,
+        },
+        {
+            'id': 'jeton_stucco',
+            'name': 'Jotun Stucco',
+            'unit': 'kg',
+            'coverage': 1.5,
+            'price': Decimal('10'),
+            'default': False,
+        },
+    ],
+
+    'finition': {
+        'mat': [
+            {
+                'id': 'fenomastic_emulsion_matt',
+                'name': 'Fenomastic Pure Colours Emulsion Matt',
+                'tier': 'Medium',
+                'unit': 'L',
+                'coverage': 10,   # m² per liter per coat
+                'price': Decimal('45'),
+                'default': True,
+            },
+            {
+                'id': 'fenomastic_rich_matt',
+                'name': 'Fenomastic My Home Rich Matt',
+                'tier': 'Premium',
+                'unit': 'L',
+                'coverage': 12,
+                'price': Decimal('65'),
+                'default': False,
+            },
+            {
+                'id': 'fenomastic_wonderwall_lux',
+                'name': 'Fenomastic Wonderwall Lux',
+                'tier': 'Ultra Premium',
+                'unit': 'L',
+                'coverage': 14,
+                'price': Decimal('85'),
+                'default': False,
+            },
+            {
+                'id': 'fenomastic_enamel_matt',
+                'name': 'Fenomastic Pure Colours Enamel Matt',
+                'tier': 'Enamel',
+                'unit': 'L',
+                'coverage': 12,
+                'price': Decimal('70'),
+                'default': False,
+            },
+        ],
+        'satine': [
+            {
+                'id': 'fenomastic_smooth_silk',
+                'name': 'Fenomastic My Home Smooth Silk',
+                'tier': 'Standard',
+                'unit': 'L',
+                'coverage': 12,
+                'price': Decimal('55'),
+                'default': True,
+            },
+            {
+                'id': 'fenomastic_enamel_semigloss',
+                'name': 'Fenomastic Pure Colours Enamel Semigloss',
+                'tier': 'Enamel',
+                'unit': 'L',
+                'coverage': 12,
+                'price': Decimal('60'),
+                'default': False,
+            },
+        ],
+        'brillant': [
+            {
+                'id': 'fenomastic_enamel_gloss',
+                'name': 'Fenomastic Pure Colours Enamel Gloss',
+                'tier': 'Standard',
+                'unit': 'L',
+                'coverage': 12,
+                'price': Decimal('65'),
+                'default': True,
+            },
+        ],
+    },
+}

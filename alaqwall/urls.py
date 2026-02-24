@@ -17,6 +17,8 @@ urlpatterns = [
     # Quotes, Orders, Invoices
     path('api/', include('apps.quotes.urls')),
 
+    path("api/predictor/", include("apps.predictor.urls")),
+
     # DRF browsable API login
     path('api-auth/', include('rest_framework.urls')),
 ]

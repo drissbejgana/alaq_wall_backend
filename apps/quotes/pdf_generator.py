@@ -132,22 +132,21 @@ def generate_quote_pdf(quote, logo_path=None):
     # Company & Client info
     user = quote.user
     company_info = f"""
-    <b>{user.company_name or user.username}</b><br/>
-    {user.first_name} {user.last_name}<br/>
-    {user.phone or ''}<br/>
-    {user.city or ''}<br/>
-    {user.email}
-    """
-    
+        <b>{user.company_name}</b><br/>
+        +212767915425<br/>
+        contact@alaqwall.com<br/>
+        25, zone industrielle Sidi Ghanem -3 40010 Marrakech - Maroc
+        """
+
     client_info = f"""
-    <b>Client:</b><br/>
-    {quote.client_name or 'Non spécifié'}<br/>
-    {quote.client_phone or ''}<br/>
-    {quote.client_address or ''}
-    """
-    
+        <b>Client:</b><br/>
+        {quote.client_name or 'Non spécifié'}<br/>
+        {quote.client_phone or ''}<br/>
+        {quote.client_address or ''}
+        """
+
     info_table = Table([
-        [ Paragraph(client_info, normal_style)]
+        [Paragraph(company_info, normal_style), Paragraph(client_info, normal_style)]
     ], colWidths=[9*cm, 8*cm])
     
     info_table.setStyle(TableStyle([

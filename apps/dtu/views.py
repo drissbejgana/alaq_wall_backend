@@ -6,12 +6,11 @@ from rest_framework.response import Response
 from rest_framework import permissions
 
 from .constants import (
-    SYSTEMS, MATERIAL_PRICES, LABOR_PRICES,
+    SYSTEMS, MATERIAL_PRICES, LABOR_PRICES, PRODUCTS,
     PLAFOND_TYPES, FINITION_TYPES, PEINTURE_ASPECTS, DECORATIVE_OPTIONS,
     ELEMENTS, PROJECT_TYPES, ZONES, VAT_RATE, DEFAULTS,
     EXTERIEUR_TYPES, EXTERIEUR_FINITIONS, ANCIEN_ENDUIT_OPTIONS,
 )
-
 
 class DTUReferenceView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -34,6 +33,20 @@ class DTUReferenceView(APIView):
             'defaults': {
                 'vat_rate': float(VAT_RATE),
                 'labor_per_m2': float(DEFAULTS['labor_per_m2']),
+            },
+            'products': {
+                'impression': [
+                    {**p, 'price': float(p['price'])} for p in PRODUCTS['impression']
+                ],
+                'enduit': [
+                    {**p, 'price': float(p['price'])} for p in PRODUCTS['enduit']
+                ],
+                'finition': {
+                    aspect: [
+                        {**p, 'price': float(p['price'])} for p in products
+                    ]
+                    for aspect, products in PRODUCTS['finition'].items()
+                },
             },
         })
 
