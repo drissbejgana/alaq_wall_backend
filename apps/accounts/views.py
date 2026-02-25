@@ -9,7 +9,8 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from .serializers import RegisterSerializer, UserSerializer
 
 User = get_user_model()
@@ -118,7 +119,7 @@ class GoogleAuthURLView(APIView):
         request.session["google_oauth_state"] = state
         return Response({"authorization_url": authorization_url, "state": state})
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class GoogleCallbackView(APIView):
     """
     POST /api/auth/google/callback/

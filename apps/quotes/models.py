@@ -21,6 +21,13 @@ class Quote(models.Model):
     status = models.CharField(max_length=20, choices=QUOTE_STATUSES, default='draft')
     valid_until = models.DateField(null=True, blank=True)
 
+    selected_decoratif = models.CharField(
+    max_length=50, blank=True, default='lady_design_purple'
+    )
+    selected_decoratif_size = models.CharField(
+        max_length=10, blank=True, default=''   # e.g. '4L', '9L'
+    )
+
     project_type = models.CharField(max_length=20, choices=PROJECT_TYPES, default='batiment')
     zone = models.CharField(max_length=20, choices=ZONES, default='interieur')
 

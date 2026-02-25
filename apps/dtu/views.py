@@ -47,6 +47,13 @@ class DTUReferenceView(APIView):
                     ]
                     for aspect, products in PRODUCTS['finition'].items()
                 },
+                'decoratif': [
+                    {**p, 'price': float(p['price']),
+                    'variants': [
+                        {**v, 'price': float(v['price'])} for v in p.get('variants', [])
+                    ]}
+                    for p in PRODUCTS['decoratif']
+                ],
             },
         })
 

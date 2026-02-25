@@ -342,4 +342,41 @@ PRODUCTS = {
             },
         ],
     },
+
+    'decoratif': [
+        {
+            'id': 'lady_design_purple',
+            'name': 'Lady Design Purple',
+            'unit': 'L',
+            'coverage': 4,        # adjust m² per liter as needed
+            'price': Decimal('85'),
+            'default': True,
+            'variants': [],       # no size variants
+        },
+        {
+            'id': 'lady_design_romano',
+            'name': 'Lady Design Romano',
+            'unit': 'L',
+            'coverage': 4,
+            'price': Decimal('90'),
+            'default': False,
+            'variants': [
+                {'size': '4L',  'price': Decimal('90')},
+                {'size': '9L',  'price': Decimal('195')},
+            ],
+        },
+        {
+            'id': 'lady_design_stico_antic',
+            'name': 'Lady Design Stico Antic',
+            'unit': 'L',
+            'coverage': 4,
+            'price': Decimal('85'),
+            'default': False,
+            'variants': [
+                {'size': '1L',  'price': Decimal('30')},
+                {'size': '4L',  'price': Decimal('85')},
+                {'size': '9L',  'price': Decimal('180')},
+            ],
+        },
+    ],
 }

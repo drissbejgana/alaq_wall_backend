@@ -69,6 +69,8 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
             'exterieur_type', 'exterieur_finition', 'ancien_enduit',
             'selected_impression', 'selected_enduit', 'selected_finition',
             'client_name', 'client_address', 'client_phone', 'notes',
+            'selected_decoratif',
+            'selected_decoratif_size',
         ]
 
     def create(self, validated_data):
@@ -212,15 +214,34 @@ class QuoteCreateSerializer(serializers.ModelSerializer):
             if quote.element == 'mur' and quote.finition_type == 'decorative':
                 # Decorative keeps old logic
                 if quote.decorative_option == 'produit_decoratif':
-                    deco_qty = math.ceil(surface / 4)
-                    materials.append({
-                        'material_id': 'produit_decoratif',
-                        'name': 'Produit décoratif',
-                        'unit': 'L',
-                        'quantity': deco_qty,
-                        'unit_price': MATERIAL_PRICES['produit_decoratif'],
-                    })
-                    material_cost += deco_qty * MATERIAL_PRICES['produit_decoratif']
+                    # Find selected decoratif product
+                    dec_products = PRODUCTS.get('decoratif', [])
+                    dec_product = next(
+                        (p for p in dec_products if p['id'] == quote.selected_decoratif),
+                        dec_products[0] if dec_products else None
+                    )
+                    if dec_product:
+                        deco_qty = math.ceil(surface / dec_product['coverage'])
+                        deco_price = dec_product['price']
+
+                        # Use variant price if a size was selected
+                        if quote.selected_decoratif_size:
+                            variant = next(
+                                (v for v in dec_product.get('variants', [])
+                                if v['size'] == quote.selected_decoratif_size),
+                                None
+                            )
+                            if variant:
+                                deco_price = variant['price']
+
+                        materials.append({
+                            'material_id': dec_product['id'],
+                            'name': dec_product['name'],
+                            'unit': dec_product['unit'],
+                            'quantity': deco_qty,
+                            'unit_price': deco_price,
+                        })
+                        material_cost += deco_qty * deco_price
                 else:
                     pp_qty = math.ceil(surface * 1.1)
                     colle_qty = math.ceil(surface / 5)

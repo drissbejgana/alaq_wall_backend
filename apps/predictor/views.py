@@ -66,25 +66,24 @@ def predict_floor(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # Optionally save to database for history
-    try:
-        # ✅ Rewind file pointer before saving to DB — after Image.open() it's at EOF
-        uploaded_file.seek(0)
-        PredictionRecord.objects.create(
-            image=uploaded_file,
-            result_json=result,
-            floor_count=len(result["predictions"]),
-            max_confidence=(
-                max(p["confidence"] for p in result["predictions"])
-                if result["predictions"]
-                else 0.0
-            ),
-            image_width=result["image_width"],
-            image_height=result["image_height"],
-        )
-    except Exception as e:
-        # Don't fail the request if DB write fails
-        logger.warning(f"Could not save prediction record: {e}\n{traceback.format_exc()}")
+    # try:
+    #     # ✅ Rewind file pointer before saving to DB — after Image.open() it's at EOF
+    #     uploaded_file.seek(0)
+    #     PredictionRecord.objects.create(
+    #         image=uploaded_file,
+    #         result_json=result,
+    #         floor_count=len(result["predictions"]),
+    #         max_confidence=(
+    #             max(p["confidence"] for p in result["predictions"])
+    #             if result["predictions"]
+    #             else 0.0
+    #         ),
+    #         image_width=result["image_width"],
+    #         image_height=result["image_height"],
+    #     )
+    # except Exception as e:
+    #     # Don't fail the request if DB write fails
+    #     logger.warning(f"Could not save prediction record: {e}\n{traceback.format_exc()}")
 
     return Response(result, status=status.HTTP_200_OK)
 
